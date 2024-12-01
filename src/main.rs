@@ -32,7 +32,7 @@ pub struct Config{
 }
 
 
-fn process_thermostat_event<'a>(state: &'a mut ThermostatState, event: ThermostatEvent) {
+fn process_thermostat_event(state: &mut ThermostatState, event: ThermostatEvent) {
                 debug!("New message {:?}", event);
                 match event {
                     ThermostatEvent::MqttConnected => {
@@ -86,8 +86,7 @@ fn main() -> Result<()> {
 
     let _wifi = wifi::configure_wifi(app_config.wifi_ssid, app_config.wifi_psk, peripherals.modem, sysloop)?;
     let broker_url = format!("mqtt://{}", app_config.mqtt_host);
-    let mut mqtt_config = MqttClientConfiguration::default();
-    mqtt_config.skip_cert_common_name_check = true;
+    let mqtt_config = MqttClientConfiguration::<'_> {skip_cert_common_name_check : true, ..Default::default()};
     let state_topic = "custom_devices/heater";
     let command_topic = "custom_devices/heater/set";
     let mut state = ThermostatState {

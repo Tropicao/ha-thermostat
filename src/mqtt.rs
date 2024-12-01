@@ -12,8 +12,8 @@ fn process_mqtt_message(data: &[u8], details: Details, sender: &Sender<Thermosta
             debug!("New message: {:?}", data);
             let message = str::from_utf8(data).unwrap();
             let cmd = ThermostatCommand::try_from(message);
-            if cmd.is_ok() {
-                sender.send(ThermostatEvent::CommandReceived(cmd.unwrap())).expect("")
+            if let Ok(c) = cmd {
+                sender.send(ThermostatEvent::CommandReceived(c)).expect("")
             }
         }
         _ => warn!("Unprocessed message event")
@@ -21,7 +21,7 @@ fn process_mqtt_message(data: &[u8], details: Details, sender: &Sender<Thermosta
 }
 pub fn process_mqtt_event(ev: EspMqttEvent, event_tx: &Sender<ThermostatEvent>) {
         match ev.payload() {
-            EventPayload::Received { id: _, topic:_, data, details } => process_mqtt_message(data, details, &event_tx),
+            EventPayload::Received { id: _, topic:_, data, details } => process_mqtt_message(data, details, event_tx),
             EventPayload::Connected(_) => event_tx.send(ThermostatEvent::MqttConnected).unwrap(),
             EventPayload::Subscribed(id) => event_tx.send(ThermostatEvent::TopicSubscribed(id)).unwrap(),
             EventPayload::Published(id) => event_tx.send(ThermostatEvent::MessagePublished(id)).unwrap(),
@@ -33,7 +33,7 @@ pub fn process_mqtt_event(ev: EspMqttEvent, event_tx: &Sender<ThermostatEvent>) 
 
 pub fn publish_configuration(client: &mut EspMqttClient, config_topic: &str, configuration: &ThermostatConfiguration) -> Result<u32, Box<dyn std::error::Error>>
 {
-    let id = client.publish(&config_topic, QoS::AtLeastOnce, false,
+    let id = client.publish(config_topic, QoS::AtLeastOnce, false,
         serde_json::to_string(configuration)?.as_bytes())?;
     Ok(id)
 }
@@ -43,7 +43,7 @@ pub fn publish_status(client: &mut EspMqttClient, state_topic: &str, cmd: Thermo
        state: cmd.to_string()
     };
 
-    let id = client.publish(&state_topic, QoS::AtLeastOnce, false,
+    let id = client.publish(state_topic, QoS::AtLeastOnce, false,
         serde_json::to_string(&message)?.as_bytes())?;
     Ok(id)
 }

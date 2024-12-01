@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use serde::Serialize;
 use esp_idf_svc::hal::gpio::{Output, PinDriver, Gpio15};
 use esp_idf_svc::mqtt::client::EspMqttClient;
@@ -55,12 +56,9 @@ pub enum ThermostatCommand {
     Off
 }
 
-impl ToString for ThermostatCommand {
-    fn to_string(&self) -> String {
-        match self {
-            Self::On => String::from("ON"),
-            Self::Off => String::from("OFF")
-        }
+impl Display for ThermostatCommand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {Self::On => "ON", Self::Off => "OFF"})
     }
 }
 
