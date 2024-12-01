@@ -1,0 +1,6 @@
+[ha-thermostat]
+wifi_ssid = "SSID_DEFAULT"
+wifi_psk = "PSK_DEFAULT"
+uuid = "000000000000000000000000000000000000"
+mqtt_host = "127.0.0.1"
+
