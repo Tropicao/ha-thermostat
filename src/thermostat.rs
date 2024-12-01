@@ -1,14 +1,14 @@
-use std::fmt::Display;
-use serde::Serialize;
-use esp_idf_svc::hal::gpio::{Output, PinDriver, Gpio15};
+use esp_idf_svc::hal::gpio::{Gpio15, Output, PinDriver};
 use esp_idf_svc::mqtt::client::EspMqttClient;
+use serde::Serialize;
+use std::fmt::Display;
 
 #[derive(Debug)]
 pub enum ThermostatEvent {
     MqttConnected,
     TopicSubscribed(u32),
     CommandReceived(ThermostatCommand),
-    MessagePublished(u32)
+    MessagePublished(u32),
 }
 
 pub struct ThermostatState<'a> {
@@ -20,7 +20,7 @@ pub struct ThermostatState<'a> {
     pub state_topic_sub_id: Option<u32>,
     pub command_topic_sub_id: Option<u32>,
     pub pub_id: Option<u32>,
-    pub relay: PinDriver<'static, Gpio15, Output>
+    pub relay: PinDriver<'static, Gpio15, Output>,
 }
 
 #[derive(Serialize)]
@@ -31,7 +31,6 @@ pub struct Device {
     pub model: String,
     pub manufacturer: String,
 }
-    
 
 #[derive(Serialize)]
 pub struct ThermostatConfiguration {
@@ -42,23 +41,30 @@ pub struct ThermostatConfiguration {
     pub state_topic: String,
     pub name: String,
     pub unique_id: String,
-    pub device: Device
+    pub device: Device,
 }
 
 #[derive(Serialize)]
 pub struct ThermostatStateMsg {
-    pub state: String
+    pub state: String,
 }
 
 #[derive(Debug)]
 pub enum ThermostatCommand {
     On,
-    Off
+    Off,
 }
 
 impl Display for ThermostatCommand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", match self {Self::On => "ON", Self::Off => "OFF"})
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::On => "ON",
+                Self::Off => "OFF",
+            }
+        )
     }
 }
 
@@ -68,7 +74,7 @@ impl TryFrom<&str> for ThermostatCommand {
         match value {
             "ON" => Ok(Self::On),
             "OFF" => Ok(Self::Off),
-            _ => Err("Unrecognized thermostat command")
+            _ => Err("Unrecognized thermostat command"),
         }
     }
 }

@@ -1,15 +1,17 @@
-use log::info;
+use anyhow::Result;
 use esp_idf_svc::{
     eventloop::EspSystemEventLoop,
-    wifi::{EspWifi, BlockingWifi, ClientConfiguration, Configuration, AuthMethod},
     hal::peripheral,
+    wifi::{AuthMethod, BlockingWifi, ClientConfiguration, Configuration, EspWifi},
 };
-use anyhow::Result;
+use log::info;
 
-pub fn configure_wifi(ssid: &str, pass: &str,
+pub fn configure_wifi(
+    ssid: &str,
+    pass: &str,
     modem: impl peripheral::Peripheral<P = esp_idf_svc::hal::modem::Modem> + 'static,
-    sysloop: EspSystemEventLoop)->Result<Box<EspWifi<'static>>> {
-
+    sysloop: EspSystemEventLoop,
+) -> Result<Box<EspWifi<'static>>> {
     let mut esp_wifi = EspWifi::new(modem, sysloop.clone(), None)?;
     let mut wifi = BlockingWifi::wrap(&mut esp_wifi, sysloop)?;
     wifi.set_configuration(&Configuration::Client(ClientConfiguration::default()))?;
@@ -19,7 +21,11 @@ pub fn configure_wifi(ssid: &str, pass: &str,
 
     let ap_infos = wifi.scan()?;
     let ours = ap_infos.into_iter().find(|a| a.ssid == ssid);
-    let channel = if let Some(ours) = ours { Some(ours.channel) } else { None };
+    let channel = if let Some(ours) = ours {
+        Some(ours.channel)
+    } else {
+        None
+    };
 
     wifi.set_configuration(&Configuration::Client(ClientConfiguration {
         ssid: ssid
@@ -30,7 +36,8 @@ pub fn configure_wifi(ssid: &str, pass: &str,
             .expect("Could not parse the given password into WiFi config"),
         channel,
         auth_method,
-        ..Default::default() }))?;
+        ..Default::default()
+    }))?;
 
     info!("Connecting wifi...");
 
@@ -45,4 +52,3 @@ pub fn configure_wifi(ssid: &str, pass: &str,
     info!("Wifi DHCP info: {:?}", ip_info);
     Ok(Box::new(esp_wifi))
 }
-
